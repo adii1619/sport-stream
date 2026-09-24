@@ -1,9 +1,9 @@
 import React from 'react';
 import { Home, Flame, Radio, Bookmark, Trophy, ShieldCheck, History, Star } from 'lucide-react';
 
-export default function Sidebar({ isOpen }) {
+export default function Sidebar({ isOpen, activeView, onSelectNav }) {
   const mainNav = [
-    { id: 'home', name: 'Home', icon: Home, active: true },
+    { id: 'home', name: 'Home', icon: Home },
     { id: 'trending', name: 'Trending Highlights', icon: Flame },
     { id: 'live', name: 'Live Arenas', icon: Radio, badge: '3 LIVE' },
     { id: 'saved', name: 'Watchlist', icon: Bookmark },
@@ -25,7 +25,8 @@ export default function Sidebar({ isOpen }) {
         isOpen ? 'w-64' : 'w-20 hidden md:flex'
       }`}
     >
-<div className="p-3 space-y-6 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-emerald-500">        {/* Main Nav */}
+      <div className="p-3 space-y-6 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-800 hover:[&::-webkit-scrollbar-thumb]:bg-emerald-500">
+        {/* Main Nav */}
         <div>
           {isOpen && (
             <p className="px-3 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
@@ -33,36 +34,39 @@ export default function Sidebar({ isOpen }) {
             </p>
           )}
           <div className="space-y-1">
-            {mainNav.map((item) => (
-              <button
-                key={item.id}
-                className={`relative w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-150 group ${
-                  item.active
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/5'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                }`}
-              >
-                {/* Active left indicator glow bar */}
-                {item.active && (
-                  <span className="absolute left-0 top-2 bottom-2 w-1 bg-emerald-400 rounded-r-full shadow-sm shadow-emerald-400"></span>
-                )}
+            {mainNav.map((item) => {
+              const isActive = (item.id === 'saved' && activeView === 'saved') || (item.id === 'home' && activeView === 'home');
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onSelectNav(item.id)}
+                  className={`relative w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-150 group ${
+                    isActive
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/5'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                >
+                  {isActive && (
+                    <span className="absolute left-0 top-2 bottom-2 w-1 bg-emerald-400 rounded-r-full shadow-sm shadow-emerald-400"></span>
+                  )}
 
-                <item.icon className={`w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
-                  item.active ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'
-                }`} />
+                  <item.icon className={`w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                    isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'
+                  }`} />
 
-                {isOpen && (
-                  <div className="flex items-center justify-between w-full">
-                    <span className="truncate">{item.name}</span>
-                    {item.badge && (
-                      <span className="text-[9px] font-black bg-red-500/20 text-red-400 px-2 py-0.5 rounded-md border border-red-500/30 animate-pulse tracking-wider">
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </button>
-            ))}
+                  {isOpen && (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="truncate">{item.name}</span>
+                      {item.badge && (
+                        <span className="text-[9px] font-black bg-red-500/20 text-red-400 px-2 py-0.5 rounded-md border border-red-500/30 animate-pulse tracking-wider">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -107,7 +111,7 @@ export default function Sidebar({ isOpen }) {
         </div>
       </div>
 
-      {/* Footer Pro Badge (When Sidebar is Open) */}
+      {/* Footer Status */}
       {isOpen && (
         <div className="p-3 border-t border-slate-800/80 bg-slate-950/60">
           <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-950/50 to-slate-900 border border-emerald-500/20 flex items-center justify-between">
