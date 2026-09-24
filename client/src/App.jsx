@@ -3,7 +3,6 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import VideoCard from './components/VideoCard';
 import WatchPage from './components/WatchPage';
-import { MOCK_VIDEOS } from './data/mockVideos';
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -11,18 +10,45 @@ export default function App() {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLiveOnly, setIsLiveOnly] = useState(false);
-  const [activeView, setActiveView] = useState('home'); // 'home' | 'saved'
+  const [activeView, setActiveView] = useState('home');
 
-  // Load saved video IDs from localStorage on initial render
+  // API State
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load saved video IDs from localStorage
   const [savedVideoIds, setSavedVideoIds] = useState(() => {
     const saved = localStorage.getItem('stadiumhub_watchlist');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Sync saved videos to localStorage whenever savedVideoIds changes
+  // Sync watchlist to localStorage
   useEffect(() => {
     localStorage.setItem('stadiumhub_watchlist', JSON.stringify(savedVideoIds));
   }, [savedVideoIds]);
+
+  // Fetch Videos from Express Backend
+  useEffect(() => {
+    const fetchVideos = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (activeCategory !== 'All Sports') params.append('category', activeCategory);
+        if (searchQuery.trim()) params.append('search', searchQuery.trim());
+        if (isLiveOnly) params.append('isLive', 'true');
+
+        const response = await fetch(`http://localhost:5000/api/videos?${params.toString()}`);
+        const data = await response.json();
+        setVideos(data);
+      } catch (error) {
+        console.error('Failed to fetch videos from server:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, [activeCategory, searchQuery, isLiveOnly]);
 
   const toggleSaveVideo = (videoId) => {
     setSavedVideoIds((prev) =>
@@ -32,33 +58,10 @@ export default function App() {
     );
   };
 
-  // Multi-Filter Logic: View Mode + Category + Search + Live Toggle
-  const filteredVideos = MOCK_VIDEOS.filter((video) => {
-    // Watchlist View Filter
-    if (activeView === 'saved' && !savedVideoIds.includes(video.id)) {
-      return false;
-    }
-
-    // Category Filter
-    const matchesCategory =
-      activeCategory === 'All Sports' ||
-      video.sport.toLowerCase() === activeCategory.toLowerCase();
-
-    // Search Filter
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !query ||
-      video.title.toLowerCase().includes(query) ||
-      video.sport.toLowerCase().includes(query) ||
-      video.league.toLowerCase().includes(query) ||
-      video.teams.home.toLowerCase().includes(query) ||
-      video.teams.away.toLowerCase().includes(query);
-
-    // Live Only Filter
-    const matchesLive = !isLiveOnly || video.isLive;
-
-    return matchesCategory && matchesSearch && matchesLive;
-  });
+  // Filter watchlist items if in Watchlist view
+  const displayedVideos = activeView === 'saved'
+    ? videos.filter((v) => savedVideoIds.includes(v._id || v.id))
+    : videos;
 
   const handleCategorySelect = (category) => {
     setActiveCategory(category);
@@ -77,7 +80,7 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
-      {/* Header with Search & Live Controls */}
+      {/* Header */}
       <Navbar 
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
         activeCategory={activeCategory}
@@ -100,13 +103,13 @@ export default function App() {
         {/* View Switcher: Watch Page vs Video Grid */}
         {selectedVideo ? (
           <WatchPage
-            key={selectedVideo.id}
+            key={selectedVideo._id || selectedVideo.id}
             video={selectedVideo}
             onBack={() => setSelectedVideo(null)}
-            relatedVideos={MOCK_VIDEOS}
+            relatedVideos={videos}
             onSelectVideo={(video) => setSelectedVideo(video)}
-            isSaved={savedVideoIds.includes(selectedVideo.id)}
-            onToggleSave={() => toggleSaveVideo(selectedVideo.id)}
+            isSaved={savedVideoIds.includes(selectedVideo._id || selectedVideo.id)}
+            onToggleSave={() => toggleSaveVideo(selectedVideo._id || selectedVideo.id)}
           />
         ) : (
           <main className="flex-1 overflow-y-auto p-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-800 hover:[&::-webkit-scrollbar-thumb]:bg-emerald-500">
@@ -116,7 +119,7 @@ export default function App() {
                 <h1 className="text-xl font-black uppercase tracking-wider text-white flex items-center gap-2">
                   <span>{activeView === 'saved' ? 'Saved Watchlist' : activeCategory}</span>
                   <span className="text-xs font-bold text-slate-400 font-mono bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-full">
-                    {filteredVideos.length} matches
+                    {displayedVideos.length} matches
                   </span>
                 </h1>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -141,11 +144,17 @@ export default function App() {
               )}
             </div>
 
-            {/* Video Grid */}
-            {filteredVideos.length > 0 ? (
+            {/* Loading & Grid Rendering */}
+            {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredVideos.map((video) => (
-                  <div key={video.id} onClick={() => setSelectedVideo(video)}>
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <div key={n} className="h-64 bg-slate-900/40 border border-slate-800 rounded-2xl animate-pulse"></div>
+                ))}
+              </div>
+            ) : displayedVideos.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedVideos.map((video) => (
+                  <div key={video._id || video.id} onClick={() => setSelectedVideo(video)}>
                     <VideoCard video={video} />
                   </div>
                 ))}
@@ -157,14 +166,6 @@ export default function App() {
                     ? 'No matches saved to your watchlist yet.' 
                     : 'No matches found.'}
                 </p>
-                {activeView === 'saved' && (
-                  <button 
-                    onClick={() => setActiveView('home')}
-                    className="mt-3 px-4 py-2 bg-emerald-500 text-slate-950 text-xs font-bold rounded-lg hover:bg-emerald-400 transition-colors"
-                  >
-                    Explore Matches
-                  </button>
-                )}
               </div>
             )}
           </main>
