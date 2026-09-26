@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-slate-950 text-slate-100 font-sans antialiased;
+/* Custom Dark Scrollbar Styling (Webkit browsers) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px; /* Controls horizontal scrollbar height */
+}
+
+::-webkit-scrollbar-track {
+  background: #020617; /* Matches dark background (slate-950) */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b; /* Lighter slate color for subtle visibility (slate-800) */
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155; /* Highlighted handle on hover (slate-700) */
+}
+
+/* Firefox custom scrollbar colors */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b #020617;
+}
+
+/* Utility to completely hide scrollbars where clean overflow scrolling is preferred */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
 }

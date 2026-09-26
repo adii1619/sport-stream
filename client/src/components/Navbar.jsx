@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Search, Bell, User, Tv, Activity } from 'lucide-react';
+import { Menu, Search, Bell, Tv, Activity, LogOut, LogIn } from 'lucide-react';
 
 const SPORTS_CATEGORIES = [
   { id: 'all', name: 'All Sports', icon: '⚡' },
@@ -19,7 +19,10 @@ export default function Navbar({
   searchQuery,
   onSearchChange,
   onLiveOnlyToggle,
-  isLiveOnly
+  isLiveOnly,
+  user,
+  onOpenAuthModal,
+  onLogout
 }) {
   const liveScores = [
     { id: 1, sport: '⚽', match: 'Real Madrid 2 - 1 Bayern', status: '82\'', isLive: true },
@@ -88,7 +91,7 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Right: Actions & Live Toggle */}
+        {/* Right: Actions, Live Toggle & User Auth */}
         <div className="flex items-center gap-3">
           <button 
             onClick={onLiveOnlyToggle}
@@ -101,13 +104,38 @@ export default function Navbar({
             <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
             {isLiveOnly ? 'Showing Live' : 'Live Stream'}
           </button>
-          <button className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors relative border border-transparent hover:border-slate-700">
+
+          <button className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors relative border border-transparent hover:border-slate-700 hidden sm:block">
             <Bell className="w-5 h-5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-900"></span>
           </button>
-          <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
-            <User className="w-5 h-5" />
-          </div>
+
+          {/* User Auth Controls — Standalone Circular Avatar */}
+          {user ? (
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+              <div 
+                title={user.name}
+                className="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm flex items-center justify-center uppercase shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500/30 select-none cursor-default"
+              >
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <button
+                onClick={onLogout}
+                title="Sign Out"
+                className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-full transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuthModal}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold uppercase tracking-wider transition-colors shadow-md shadow-emerald-500/10"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
       </header>
 
