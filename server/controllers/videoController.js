@@ -7,17 +7,14 @@ export const getVideos = async (req, res) => {
     const { category, search, isLive } = req.query;
     let query = {};
 
-    // Filter by Sport / Category
     if (category && category.toLowerCase() !== 'all sports') {
       query.sport = { $regex: new RegExp(`^${category}$`, 'i') };
     }
 
-    // Filter by Live Stream Status
     if (isLive === 'true') {
       query.isLive = true;
     }
 
-    // Search Filter (Matches Title, Sport, League, or Team Names)
     if (search) {
       const searchRegex = new RegExp(search, 'i');
       query.$or = [
@@ -45,6 +42,36 @@ export const getVideoById = async (req, res) => {
       return res.status(404).json({ message: 'Video match not found' });
     }
     res.json(video);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Create a new video stream
+// @route   POST /api/videos
+export const createVideo = async (req, res) => {
+  try {
+    const { title, sport, league, homeTeam, awayTeam, status, duration, thumbnail, isLive } = req.body;
+
+    if (!title || !sport || !league || !homeTeam || !awayTeam || !thumbnail) {
+      return res.status(400).json({ message: 'Please provide all required match fields' });
+    }
+
+    const video = new Video({
+      title,
+      sport,
+      league,
+      teams: { home: homeTeam, away: awayTeam },
+      status: status || 'HIGHLIGHTS',
+      duration: duration || '10:00',
+      views: isLive ? '1.2K watching' : '0 views',
+      uploadedAt: 'Just now',
+      thumbnail,
+      isLive: Boolean(isLive),
+    });
+
+    const createdVideo = await video.save();
+    res.status(201).json(createdVideo);
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }

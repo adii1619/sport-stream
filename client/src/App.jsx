@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import VideoCard from './components/VideoCard';
 import WatchPage from './components/WatchPage';
 import AuthModal from './components/AuthModal';
+import AddVideoModal from './components/AddVideoModal';
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -18,28 +19,26 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Local Watchlist fallback for logged-out state
+  // Local Watchlist fallback
   const [savedVideoIds, setSavedVideoIds] = useState(() => {
     const saved = localStorage.getItem('stadiumhub_watchlist');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Check for saved user token on initial mount
   useEffect(() => {
     const savedUserData = localStorage.getItem('stadiumhub_user');
     if (savedUserData) {
       const parsedUser = JSON.parse(savedUserData);
       setUser(parsedUser);
       if (parsedUser.watchlist) {
-        // Normalize array of video ObjectIDs
         const watchlistIds = parsedUser.watchlist.map(item => typeof item === 'object' ? item._id : item);
         setSavedVideoIds(watchlistIds);
       }
     }
   }, []);
 
-  // Sync LocalStorage watchlist for logged-out mode
   useEffect(() => {
     if (!user) {
       localStorage.setItem('stadiumhub_watchlist', JSON.stringify(savedVideoIds));
@@ -47,29 +46,28 @@ export default function App() {
   }, [savedVideoIds, user]);
 
   // Fetch Videos from Express Backend
+  const fetchVideos = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (activeCategory !== 'All Sports') params.append('category', activeCategory);
+      if (searchQuery.trim()) params.append('search', searchQuery.trim());
+      if (isLiveOnly) params.append('isLive', 'true');
+
+      const response = await fetch(`http://localhost:5000/api/videos?${params.toString()}`);
+      const data = await response.json();
+      setVideos(data);
+    } catch (error) {
+      console.error('Failed to fetch videos from server:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchVideos = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (activeCategory !== 'All Sports') params.append('category', activeCategory);
-        if (searchQuery.trim()) params.append('search', searchQuery.trim());
-        if (isLiveOnly) params.append('isLive', 'true');
-
-        const response = await fetch(`http://localhost:5000/api/videos?${params.toString()}`);
-        const data = await response.json();
-        setVideos(data);
-      } catch (error) {
-        console.error('Failed to fetch videos from server:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchVideos();
   }, [activeCategory, searchQuery, isLiveOnly]);
 
-  // Handle Authentication Success
   const handleAuthSuccess = (userData) => {
     setUser(userData);
     localStorage.setItem('stadiumhub_user', JSON.stringify(userData));
@@ -79,17 +77,18 @@ export default function App() {
     }
   };
 
-  // Handle Logout
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('stadiumhub_user');
     setSavedVideoIds([]);
   };
 
-  // Toggle Save / Watchlist with MongoDB Sync
+  const handleVideoAdded = (newVideo) => {
+    setVideos((prev) => [newVideo, ...prev]);
+  };
+
   const toggleSaveVideo = async (videoId) => {
     if (!user) {
-      // Fallback to local state if not logged in
       setSavedVideoIds((prev) =>
         prev.includes(videoId)
           ? prev.filter((id) => id !== videoId)
@@ -98,7 +97,6 @@ export default function App() {
       return;
     }
 
-    // Sync directly with MongoDB when logged in
     try {
       const response = await fetch(`http://localhost:5000/api/user/watchlist/${videoId}`, {
         method: 'POST',
@@ -112,7 +110,6 @@ export default function App() {
       const updatedIds = updatedWatchlist.map(item => typeof item === 'object' ? item._id : item);
       setSavedVideoIds(updatedIds);
 
-      // Update stored user object
       const updatedUser = { ...user, watchlist: updatedWatchlist };
       setUser(updatedUser);
       localStorage.setItem('stadiumhub_user', JSON.stringify(updatedUser));
@@ -153,6 +150,7 @@ export default function App() {
         onLiveOnlyToggle={() => { setIsLiveOnly((prev) => !prev); setSelectedVideo(null); }}
         user={user}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenAddModal={() => setIsAddModalOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -242,6 +240,13 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* Add Video Modal */}
+      <AddVideoModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onVideoAdded={handleVideoAdded}
       />
     </div>
   );

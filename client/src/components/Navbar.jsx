@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Search, Bell, Tv, Activity, LogOut, LogIn } from 'lucide-react';
+import { Menu, Search, Bell, Tv, Activity, LogOut, LogIn, Plus } from 'lucide-react';
 
 const SPORTS_CATEGORIES = [
   { id: 'all', name: 'All Sports', icon: '⚡' },
@@ -12,9 +12,9 @@ const SPORTS_CATEGORIES = [
   { id: 'esports', name: 'Esports', icon: '🎮' },
 ];
 
-export default function Navbar({ 
-  toggleSidebar, 
-  activeCategory, 
+export default function Navbar({
+  toggleSidebar,
+  activeCategory,
   onSelectCategory,
   searchQuery,
   onSearchChange,
@@ -22,6 +22,7 @@ export default function Navbar({
   isLiveOnly,
   user,
   onOpenAuthModal,
+  onOpenAddModal,
   onLogout
 }) {
   const liveScores = [
@@ -56,7 +57,7 @@ export default function Navbar({
       <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800/60">
         {/* Left: Menu & Logo */}
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={toggleSidebar}
             className="p-2 rounded-lg hover:bg-slate-800 transition-colors text-slate-300 hover:text-white border border-transparent hover:border-slate-700"
           >
@@ -91,15 +92,25 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Right: Actions, Live Toggle & User Auth */}
+        {/* Right: Actions, Add Stream (Admin Only), Live Toggle & User Auth */}
         <div className="flex items-center gap-3">
-          <button 
+          {/* Add Match Stream Button — ONLY rendered for Admins */}
+          {user && user.isAdmin && (
+            <button
+              onClick={onOpenAddModal}
+              title="Add Stream to Database (Admin)"
+              className="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          )}
+
+          <button
             onClick={onLiveOnlyToggle}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${
-              isLiveOnly
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all ${isLiveOnly
                 ? 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20'
                 : 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20'
-            }`}
+              }`}
           >
             <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
             {isLiveOnly ? 'Showing Live' : 'Live Stream'}
@@ -110,10 +121,10 @@ export default function Navbar({
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-slate-900"></span>
           </button>
 
-          {/* User Auth Controls — Standalone Circular Avatar */}
+          {/* User Auth Controls */}
           {user ? (
             <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-              <div 
+              <div
                 title={user.name}
                 className="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 font-black text-sm flex items-center justify-center uppercase shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500/30 select-none cursor-default"
               >
@@ -148,11 +159,10 @@ export default function Navbar({
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.name)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-                  isSelected
-                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-105'
-                    : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700'
-                }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 ${isSelected
+                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-105'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700'
+                  }`}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.name}</span>
