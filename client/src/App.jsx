@@ -97,8 +97,10 @@ export default function App() {
       return;
     }
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const response = await fetch(`${API_URL}/api/videos?${params.toString()}`);
     try {
-      const response = await fetch(`http://localhost:5000/api/user/watchlist/${videoId}`, {
+      const response = await fetch(`${API_URL}/api/user/watchlist/${videoId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,8 +142,8 @@ export default function App() {
   return (
     <div className="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
       {/* Header */}
-      <Navbar 
-        toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+      <Navbar
+        toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         activeCategory={activeCategory}
         onSelectCategory={handleCategorySelect}
         searchQuery={searchQuery}
@@ -157,8 +159,8 @@ export default function App() {
       {/* Main Workspace Body */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <Sidebar 
-          isOpen={sidebarOpen} 
+        <Sidebar
+          isOpen={sidebarOpen}
           activeView={activeView}
           onSelectNav={handleNavSelect}
         />
@@ -186,8 +188,8 @@ export default function App() {
                   </span>
                 </h1>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {activeView === 'saved' 
-                    ? 'Your bookmarked match highlights and live streams' 
+                  {activeView === 'saved'
+                    ? 'Your bookmarked match highlights and live streams'
                     : 'Stream latest highlights, full replays, and live sports broadcasts'}
                 </p>
               </div>
@@ -225,8 +227,8 @@ export default function App() {
             ) : (
               <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-900/30">
                 <p className="text-slate-400 font-bold text-sm">
-                  {activeView === 'saved' 
-                    ? 'No matches saved to your watchlist yet.' 
+                  {activeView === 'saved'
+                    ? 'No matches saved to your watchlist yet.'
                     : 'No matches found.'}
                 </p>
               </div>

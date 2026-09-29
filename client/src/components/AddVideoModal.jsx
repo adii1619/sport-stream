@@ -18,7 +18,7 @@ export default function AddVideoModal({ isOpen, onClose, onVideoAdded }) {
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
-
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -28,7 +28,7 @@ export default function AddVideoModal({ isOpen, onClose, onVideoAdded }) {
     const token = savedUserData ? JSON.parse(savedUserData).token : '';
 
     try {
-      const response = await fetch('http://localhost:5000/api/videos', {
+      const response = await fetch(`${API_URL}/api/videos`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
