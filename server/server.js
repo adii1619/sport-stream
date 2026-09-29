@@ -14,15 +14,16 @@ const app = express();
 
 // Configure dynamic CORS origin list
 const allowedOrigins = [
-  'http://localhost:5173',
   process.env.CLIENT_URL,
-].filter(Boolean); // Removes undefined entries if CLIENT_URL is not set locally
+  'http://localhost:5173',
+  'http://localhost:3000'
+]; // Removes undefined entries if CLIENT_URL is not set locally
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like Postman or curl) or allowed origins
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin, matched origins, or any vercel.app domain
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
